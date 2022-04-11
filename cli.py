@@ -3,15 +3,15 @@ import json
 from typing import Union, cast
 
 # MyPy doesn't support recursive type definitions
-JSONType = Union[
+JSONType = Union[  # type: ignore[misc]
     None,
     bool,
     int,
     float,
     str,
-    dict[str, "JSONType"],
-    list["JSONType"],
-]  # type: ignore[misc]
+    dict[str, "JSONType"],  # type: ignore[misc]
+    list["JSONType"],  # type: ignore[misc]
+]
 
 
 def zerotier_cli_j(option: str, *args: str) -> JSONType:
