@@ -2,44 +2,41 @@
 from .misc import only_contains, subnet_at
 from ipaddress import IPv6Network, IPv6Address
 from base64 import b32encode
+from typing import Union
 
 """
 Utility functions for configuring ZeroTier
 """
 
 
-class NodeID(int):
-    def __new__(cls, address: str) -> "NodeID":
-        if len(address) != 10 or not only_contains(
-            address.lower(), set("0123456789abcdef")
-        ):
+class FixedSizeHexUInt(int):
+    hex_len: int = 0
+
+    def __new__(cls, num: Union[str, int]) -> "FixedSizeHexUInt":
+        value = num if isinstance(num, int) else int(num, 16)
+        if not 0 <= value <= cls.max_value():
             raise ValueError(
-                "Node ID must be a 10 digit hexadecimal number"
+                f"Value of {cls.__name__} must be between {cls(0)} and {cls(cls.max_value())}, got {value:x}"
             )
-        return super().__new__(cls, int(address, 16))
+        return super().__new__(cls, value)
+
+    @classmethod
+    def max_value(cls) -> int:
+        return int(16**cls.hex_len) - 1
 
     def __str__(self) -> str:
-        return f"{self:010x}"
+        return f"{self:0{self.__class__.hex_len}x}"
 
     def __repr__(self) -> str:
-        return f"NodeID('{str(self)}')"
+        return f"{self.__class__.__name__}('{str(self)}')"
 
 
-class NetworkID(int):
-    def __new__(cls, address: str) -> "NetworkID":
-        if len(address) != 16 or not only_contains(
-            address.lower(), set("0123456789abcdef")
-        ):
-            raise ValueError(
-                "Network ID must be a 16 digit hexadecimal number"
-            )
-        return super().__new__(cls, int(address, 16))
+class NodeID(FixedSizeHexUInt):
+    hex_len: int = 10
 
-    def __str__(self) -> str:
-        return f"{self:016x}"
 
-    def __repr__(self) -> str:
-        return f"NetworkID('{str(self)}')"
+class NetworkID(FixedSizeHexUInt):
+    hex_len: int = 16
 
 
 # from https://github.com/zerotier/ZeroTierOne/blob/91b16310ea47a6de96edb488a61494f8ed8c139c/node/InetAddress.cpp#L427
